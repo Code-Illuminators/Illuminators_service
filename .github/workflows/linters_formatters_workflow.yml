@@ -1,0 +1,80 @@
+name: Linters and Formatters
+
+on:
+  push:
+
+  workflow_dispatch:
+
+jobs:
+  Pylint:
+    name: Pylint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "You should add requirements.txt if there is python code"
+          fi
+
+      - name: Run Pylint
+        run: |
+          files=$(git ls-files '*.py')
+          if [ -n "$files" ]; then
+            pylint $files --fail-under=6.0
+          else
+            echo "No Python files"
+          fi
+
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install Prettier
+        run: npm install prettier
+
+      - name: Run Prettier and make changes
+        run: npx prettier . --check
+
+  tflint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout source code
+
+      - uses: terraform-linters/setup-tflint@v6
+        name: Setup TFLint
+        with:
+          tflint_version: v0.52.0
+          cache: true
+
+      - name: Show version
+        run: tflint --version
+
+      - name: Init TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Run TFLint
+        run: tflint -f compact
