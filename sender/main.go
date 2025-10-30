@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	gomail "gopkg.in/gomail.v2"
 
@@ -20,6 +21,9 @@ type Email struct {
 }
 
 func main() {
+    
+	time.Sleep(10 * time.Second)
+
 	req, err := http.NewRequest("GET", os.Getenv("USERS_API_URL"), nil)
 	if err != nil {
 		log.Fatal(err)
