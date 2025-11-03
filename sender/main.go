@@ -21,18 +21,29 @@ type Email struct {
 }
 
 func main() {
-    
 	time.Sleep(10 * time.Second)
 
+	for {
+		log.Println("sender: start daily job")
+		runOnce()
+		log.Println("sender: job finished, sleep 24h")
+
+		time.Sleep(24 * time.Hour)
+	}
+}
+
+func runOnce() {
 	req, err := http.NewRequest("GET", os.Getenv("USERS_API_URL"), nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("request build error:", err)
+		return
 	}
 	req.Header.Set("X-Internal-Token", os.Getenv("INTERNAL_SERVICE_TOKEN"))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("request error:", err)
+		return
 	}
 	defer resp.Body.Close()
 
@@ -42,13 +53,15 @@ func main() {
 
 	var users []Email
 	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
-		log.Fatal("JSON decode error:", err)
+		log.Println("JSON decode error:", err)
+		return
 	}
 	log.Println("Parsed users:", users)
 
 	password, err := cryptoRandom.AsciiString(12)
 	if err != nil {
-		log.Fatal("Password generation error:", err)
+		log.Println("Password generation error:", err)
+		return
 	}
 	log.Println("Entry password generated:", password)
 
