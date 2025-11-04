@@ -13,3 +13,8 @@ All configuration values are loaded from the .env file.
 	4.	Stores the password in the backend (PASSWORD_SET_URL).
 	5.	Sends the password to each user via email.
 	6.	Repeats the process automatically every 24 hours.
+
+Run with Docker build
+```
+docker compose build -t go-sender .
+```
