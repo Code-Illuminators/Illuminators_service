@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    triggers {
+        pollSCM('H/5 * * * *')
+    }
+
+    environment {
+        DOCKER_IMAGE_TAG_SENDER = "sender_image_${env.BUILD_NUMBER}"
+        DOCKER_IMAGE_TAG_VOTING = "voting_image_${env.BUILD_NUMBER}"
+        ECR_LINK   = credentials('ecr_link_credential_service')
+        AWS_REGION = credentials('aws_region_credential')
+    }
+
+    stages {
+
+        stage('Checkout repository') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker images') {
+            steps {
+                script {
+                    sender_app = docker.build("illuminators_sender_ecr", "./sender")
+                    voting_app = docker.build("illuminators_voting_ecr", "./voting")
+                }
+            }
+        }
+
+        stage('Push Docker images') {
+            steps {
+                script {
+                    docker.withRegistry(
+                        "${env.ECR_LINK}",
+                        "ecr:${env.AWS_REGION}:aws_credentials"
+                    ) {
+                        sender_app.push("${env.DOCKER_IMAGE_TAG_SENDER}")
+                        voting_app.push("${env.DOCKER_IMAGE_TAG_VOTING}")
+                    }
+                }
+            }
+        }
+
+    }
+}
